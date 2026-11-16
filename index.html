@@ -27,6 +27,10 @@
       bpmDisplay.textContent = bpm;
     }
 
+    function changeBpm(amount) {
+      setBpm(bpm + amount);
+    }
+
     document.getElementById("up").addEventListener("click", () => changeBpm(1));
     document.getElementById("down").addEventListener("click", () => changeBpm(-1));
     document.getElementById("up10").addEventListener("click", () => changeBpm(10));
