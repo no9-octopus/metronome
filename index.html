@@ -13,6 +13,7 @@
   <button id="up">＋</button>
   <button id="up10">＋</span> 10</button>
   <button id="reset">Reset</button>
+  <p></p><button id="toggle">Start</button></p>
 
   <script>
     const DEFAULT_BPM = 120;
@@ -20,22 +21,87 @@
     const MAX_BPM = 240;
 
     let bpm = DEFAULT_BPM;
+    let timerId = null;      // 動作中は数字、停止中は null
+    let audioContext = null; // 音を扱う仕組み(最初のクリックで作る)
+
     const bpmDisplay = document.getElementById("bpm");
+    const toggleButton = document.getElementById("toggle");
+
+    // クリック音を1回鳴らす
+    function playClick() {
+      if (!audioContext) {
+        audioContext = new AudioContext();
+      }
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
+      const osc = audioContext.createOscillator(); // 音を作る部品
+      const gain = audioContext.createGain();      // 音量を調整する部品
+      const now = audioContext.currentTime;
+
+      osc.frequency.value = 1000; // 高さ(Hz)
+      gain.gain.setValueAtTime(1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); // 0.05秒で消す
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    }
+
+    // 一定間隔で鳴らし続ける
+    function startTimer() {
+      timerId = setInterval(playClick, 60000 / bpm);
+    }
 
     function setBpm(value) {
       bpm = Math.min(MAX_BPM, Math.max(MIN_BPM, value));
       bpmDisplay.textContent = bpm;
+        function setBpm(value) {
+          bpm = Math.min(MAX_BPM, Math.max(MIN_BPM, value));
+          bpmDisplay.textContent = bpm;
+        }
+
+    // 動作中ならテンポを変えて入れ直す
+      if (timerId !== null) {
+        clearInterval(timerId);
+        startTimer();
+      }
     }
 
     function changeBpm(amount) {
       setBpm(bpm + amount);
     }
 
+    function start() {
+      playClick(); // 押した瞬間に1拍目
+      startTimer();
+      toggleButton.textContent = "Stop";
+    }
+
+    function stop() {
+      clearInterval(timerId);
+      timerId = null;
+      toggleButton.textContent = "Start";
+    }
+
+    toggleButton.addEventListener("click", () => {
+      if (timerId === null) {
+        start();
+      } else {
+        stop();
+      }
+    });
+
     document.getElementById("up").addEventListener("click", () => changeBpm(1));
     document.getElementById("down").addEventListener("click", () => changeBpm(-1));
     document.getElementById("up10").addEventListener("click", () => changeBpm(10));
     document.getElementById("down10").addEventListener("click", () => changeBpm(-10));
     document.getElementById("reset").addEventListener("click", () => setBpm(DEFAULT_BPM));
+
+    setBpm(DEFAULT_BPM);
+
   </script>
 </body>
 </html>
