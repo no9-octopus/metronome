@@ -8,8 +8,10 @@
   <h1>メトロノーム</h1>
 
   <p><span id="bpm">120</span> BPM</p>
+  <button id="down10">-</span> 10</button>
   <button id="down">−</button>
   <button id="up">＋</button>
+  <button id="up10">＋</span> 10</button>
 
   <script>
     let bpm = 120;
@@ -22,6 +24,8 @@
 
     document.getElementById("up").addEventListener("click", () => changeBpm(1));
     document.getElementById("down").addEventListener("click", () => changeBpm(-1));
+    document.getElementById("up10").addEventListener("click", () => changeBpm(10));
+    document.getElementById("down10").addEventListener("click", () => changeBpm(-10));
   </script>
 </body>
 </html>
