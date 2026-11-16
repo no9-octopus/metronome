@@ -1,45 +1,158 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+ <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>メトロノーム</title>
-
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f4f5f7;
+      color: #222;
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    }
+
+    .metronome {
+      width: min(90vw, 360px);
+      padding: 32px 24px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 1.2rem;
+      color: #555;
+    }
+
+    .bpm-display {
+      margin: 0;
+    }
+
+    #bpm {
+      font-size: 4.5rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .unit {
+      margin-left: 8px;
+      color: #888;
+    }
+
+    .tempo-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    button {
+      font: inherit;
+      border: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:focus-visible {
+      outline: 3px solid #90caf9;
+      outline-offset: 2px;
+    }
+
+    .round {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #eceff1;
+      font-size: 1.6rem;
+    }
+
+    .round:active {
+      background: #cfd8dc;
+    }
+
     #beats {
       display: flex;
-      gap: 12px;
-      margin: 16px 0;
+      justify-content: center;
+      gap: 16px;
+      margin: 24px 0;
     }
+
     .dot {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: #ddd;
+      background: #e0e0e0;
+      transition: background 0.08s, transform 0.08s;
     }
+
     .dot.active {
       background: #e53935;
+      transform: scale(1.25);
+    }
+
+    .primary {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      background: #1976d2;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .primary:active {
+      background: #1565c0;
+    }
+
+    .primary.running {
+      background: #455a64;
+    }
+
+    .text {
+      margin-top: 12px;
+      padding: 8px 16px;
+      background: none;
+      color: #777;
     }
   </style>
-
 </head>
 <body>
-  <h1>メトロノーム</h1>
+  <main class="metronome">
+    <h1>メトロノーム</h1>
 
-  <p><span id="bpm">120</span> BPM</p>
+    <p class="bpm-display">
+      <span id="bpm">120</span><span class="unit">BPM</span>
+    </p>
 
-  <div id="beats">
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-  </div>
+    <div class="tempo-controls">
+      <button id="down" class="round" aria-label="テンポを下げる">−</button>
+      <button id="up" class="round" aria-label="テンポを上げる">＋</button>
+      <button id="down10" class="round" aria-label="テンポを10下げる">−10</button>
+      <button id="up10" class="round" aria-label="テンポを10上げる">＋10</button>
+    </div>
 
-  <button id="down10">-</span> 10</button>
-  <button id="down">−</button>
-  <button id="up">＋</button>
-  <button id="up10">＋</span> 10</button>
-  <button id="reset">Reset</button>
-  <p></p><button id="toggle">Start</button></p>
+    <div id="beats">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
+    <button id="toggle" class="primary">Start</button>
+    <button id="reset" class="text">Reset</button>
+  </main>
 
   <script>
     const DEFAULT_BPM = 120;
@@ -133,6 +246,7 @@ function start() {
   timerId = setInterval(scheduler, LOOKAHEAD_MS);
   scheduler(); // 待たずに最初の予約を入れる
   toggleButton.textContent = "Stop";
+  toggleButton.classList.add("running");
 }
 
 function stop() {
@@ -141,6 +255,7 @@ function stop() {
   currentBeat = 0;
   showBeat(-1);
   toggleButton.textContent = "Start";
+  toggleButton.classList.remove("running");
 }
 
 toggleButton.addEventListener("click", () => {
