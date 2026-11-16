@@ -43,103 +43,119 @@
 
   <script>
     const DEFAULT_BPM = 120;
-    const MIN_BPM = 30;
-    const MAX_BPM = 240;
+const MIN_BPM = 30;
+const MAX_BPM = 240;
+const BEATS_PER_BAR = 4;
 
-    let bpm = DEFAULT_BPM;
-    let timerId = null;      // 動作中は数字、停止中は null
-    let audioContext = null; // 音を扱う仕組み(最初のクリックで作る)
+const LOOKAHEAD_MS = 25;        // スケジューラを動かす間隔(ミリ秒)
+const SCHEDULE_AHEAD_SEC = 0.1; // どれだけ先の拍まで予約するか(秒)
 
-    const bpmDisplay = document.getElementById("bpm");
-    const toggleButton = document.getElementById("toggle");
-    
-    const BEATS_PER_BAR = 4;
-    let currentBeat = 0;
-    const dots = document.querySelectorAll(".dot");
+let bpm = DEFAULT_BPM;
+let timerId = null;       // スケジューラのタイマー(停止中は null)
+let audioContext = null;
+let currentBeat = 0;      // 次に鳴らす拍の番号(0〜3)
+let nextNoteTime = 0;     // 次の拍を鳴らす時刻(音声の時計の秒)
 
-    // クリック音を1回鳴らす
-    function playClick() {
-      if (!audioContext) {
-        audioContext = new AudioContext();
-      }
-      if (audioContext.state === "suspended") {
-        audioContext.resume();
-      }
+const bpmDisplay = document.getElementById("bpm");
+const toggleButton = document.getElementById("toggle");
+const dots = document.querySelectorAll(".dot");
 
-      const osc = audioContext.createOscillator(); // 音を作る部品
-      const gain = audioContext.createGain();      // 音量を調整する部品
-      const now = audioContext.currentTime;
+function ensureAudioContext() {
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+}
 
-      osc.frequency.value = 1000; // 高さ(Hz)
-      gain.gain.setValueAtTime(1, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); // 0.05秒で消す
+// 指定した時刻にクリック音を鳴らすよう予約する
+function playClick(time) {
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
 
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.start(now);
-      osc.stop(now + 0.05);
+  osc.frequency.value = 1000;
+  gain.gain.setValueAtTime(1, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(time);
+  osc.stop(time + 0.05);
+}
+
+// 指定した番号の丸だけを光らせる(-1なら全部消す)
+function showBeat(index) {
+  dots.forEach((dot, i) => {
+    dot.classList.toggle("active", i === index);
+  });
+}
+
+// 1拍ぶんの予約(音は予約、表示は時刻が来たら光らせる)
+function scheduleNote(beat, time) {
+  playClick(time);
+
+  const delayMs = Math.max(0, (time - audioContext.currentTime) * 1000);
+  setTimeout(() => {
+    if (timerId !== null) {
+      showBeat(beat);
     }
+  }, delayMs);
+}
 
-    // 指定した番号の丸だけを光らせる(-1なら全部消す)
-    function showBeat(index) {
-      dots.forEach((dot, i) => {
-        dot.classList.toggle("active", i === index);
-      });
-    }
+// 次の拍へ進める
+function advanceNote() {
+  nextNoteTime += 60 / bpm;
+  currentBeat = (currentBeat + 1) % BEATS_PER_BAR;
+}
 
-    // 1拍ぶんの処理(音 + 表示 + 次の拍へ)
-    function tick() {
-      playClick();
-      showBeat(currentBeat);
-      currentBeat = (currentBeat + 1) % BEATS_PER_BAR;
-    }
+// 0.1秒先までに鳴らすべき拍を、すべて予約する
+function scheduler() {
+  while (nextNoteTime < audioContext.currentTime + SCHEDULE_AHEAD_SEC) {
+    scheduleNote(currentBeat, nextNoteTime);
+    advanceNote();
+  }
+}
 
-    // 一定間隔で鳴らし続ける
-    function startTimer() {
-     timerId = setInterval(tick, 60000 / bpm);  // playClick → tick
-    }
+function setBpm(value) {
+  bpm = Math.min(MAX_BPM, Math.max(MIN_BPM, value));
+  bpmDisplay.textContent = bpm;
+}
 
-    function setBpm(value) {
-      bpm = Math.min(MAX_BPM, Math.max(MIN_BPM, value));
-      bpmDisplay.textContent = bpm;
-        function setBpm(value) {
-          bpm = Math.min(MAX_BPM, Math.max(MIN_BPM, value));
-          bpmDisplay.textContent = bpm;
-        }
+function changeBpm(amount) {
+  setBpm(bpm + amount);
+}
 
-    // 動作中ならテンポを変えて入れ直す
-      if (timerId !== null) {
-        clearInterval(timerId);
-        startTimer();
-      }
-    }
+function start() {
+  ensureAudioContext();
+  currentBeat = 0;
+  nextNoteTime = audioContext.currentTime + 0.05; // 少しだけ余裕をもって開始
+  timerId = setInterval(scheduler, LOOKAHEAD_MS);
+  scheduler(); // 待たずに最初の予約を入れる
+  toggleButton.textContent = "Stop";
+}
 
-    function changeBpm(amount) {
-      setBpm(bpm + amount);
-    }
+function stop() {
+  clearInterval(timerId);
+  timerId = null;
+  currentBeat = 0;
+  showBeat(-1);
+  toggleButton.textContent = "Start";
+}
 
-    function start() {
-      currentBeat = 0;   // 追加:1拍目から始める
-      tick();            // playClick() → tick()
-      startTimer();
-      toggleButton.textContent = "Stop";
-    }
+toggleButton.addEventListener("click", () => {
+  if (timerId === null) {
+    start();
+  } else {
+    stop();
+  }
+});
 
-    function stop() {
-      clearInterval(timerId);
-      timerId = null;
-      currentBeat = 0;   // 追加
-      showBeat(-1);      // 追加:丸を全部消す
-      toggleButton.textContent = "Start";
-    }
+document.getElementById("up").addEventListener("click", () => changeBpm(1));
+document.getElementById("down").addEventListener("click", () => changeBpm(-1));
+document.getElementById("reset").addEventListener("click", () => setBpm(DEFAULT_BPM));
 
-    toggleButton.addEventListener("click", () => {
-      if (timerId === null) {
-        start();
-      } else {
-        stop();
-      }
-    });
+setBpm(DEFAULT_BPM);
 
     document.getElementById("up").addEventListener("click", () => changeBpm(1));
     document.getElementById("down").addEventListener("click", () => changeBpm(-1));
