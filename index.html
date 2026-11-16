@@ -3,11 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>メトロノーム</title>
+
+  <style>
+    #beats {
+      display: flex;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ddd;
+    }
+    .dot.active {
+      background: #e53935;
+    }
+  </style>
+
 </head>
 <body>
   <h1>メトロノーム</h1>
 
   <p><span id="bpm">120</span> BPM</p>
+
+  <div id="beats">
+    <span class="dot"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  </div>
+
   <button id="down10">-</span> 10</button>
   <button id="down">−</button>
   <button id="up">＋</button>
@@ -26,6 +52,10 @@
 
     const bpmDisplay = document.getElementById("bpm");
     const toggleButton = document.getElementById("toggle");
+    
+    const BEATS_PER_BAR = 4;
+    let currentBeat = 0;
+    const dots = document.querySelectorAll(".dot");
 
     // クリック音を1回鳴らす
     function playClick() {
@@ -50,9 +80,23 @@
       osc.stop(now + 0.05);
     }
 
+    // 指定した番号の丸だけを光らせる(-1なら全部消す)
+    function showBeat(index) {
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("active", i === index);
+      });
+    }
+
+    // 1拍ぶんの処理(音 + 表示 + 次の拍へ)
+    function tick() {
+      playClick();
+      showBeat(currentBeat);
+      currentBeat = (currentBeat + 1) % BEATS_PER_BAR;
+    }
+
     // 一定間隔で鳴らし続ける
     function startTimer() {
-      timerId = setInterval(playClick, 60000 / bpm);
+     timerId = setInterval(tick, 60000 / bpm);  // playClick → tick
     }
 
     function setBpm(value) {
@@ -75,7 +119,8 @@
     }
 
     function start() {
-      playClick(); // 押した瞬間に1拍目
+      currentBeat = 0;   // 追加:1拍目から始める
+      tick();            // playClick() → tick()
       startTimer();
       toggleButton.textContent = "Stop";
     }
@@ -83,6 +128,8 @@
     function stop() {
       clearInterval(timerId);
       timerId = null;
+      currentBeat = 0;   // 追加
+      showBeat(-1);      // 追加:丸を全部消す
       toggleButton.textContent = "Start";
     }
 
