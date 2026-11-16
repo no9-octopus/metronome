@@ -6,5 +6,22 @@
 </head>
 <body>
   <h1>メトロノーム</h1>
+
+  <p><span id="bpm">120</span> BPM</p>
+  <button id="down">−</button>
+  <button id="up">＋</button>
+
+  <script>
+    let bpm = 120;
+    const bpmDisplay = document.getElementById("bpm");
+
+    function changeBpm(amount) {
+      bpm = Math.min(240, Math.max(30, bpm + amount));
+      bpmDisplay.textContent = bpm;
+    }
+
+    document.getElementById("up").addEventListener("click", () => changeBpm(1));
+    document.getElementById("down").addEventListener("click", () => changeBpm(-1));
+  </script>
 </body>
 </html>
