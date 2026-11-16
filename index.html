@@ -12,13 +12,18 @@
   <button id="down">−</button>
   <button id="up">＋</button>
   <button id="up10">＋</span> 10</button>
+  <button id="reset">Reset</button>
 
   <script>
-    let bpm = 120;
+    const DEFAULT_BPM = 120;
+    const MIN_BPM = 30;
+    const MAX_BPM = 240;
+
+    let bpm = DEFAULT_BPM;
     const bpmDisplay = document.getElementById("bpm");
 
-    function changeBpm(amount) {
-      bpm = Math.min(240, Math.max(30, bpm + amount));
+    function setBpm(value) {
+      bpm = Math.min(MAX_BPM, Math.max(MIN_BPM, value));
       bpmDisplay.textContent = bpm;
     }
 
@@ -26,6 +31,7 @@
     document.getElementById("down").addEventListener("click", () => changeBpm(-1));
     document.getElementById("up10").addEventListener("click", () => changeBpm(10));
     document.getElementById("down10").addEventListener("click", () => changeBpm(-10));
+    document.getElementById("reset").addEventListener("click", () => setBpm(DEFAULT_BPM));
   </script>
 </body>
 </html>
