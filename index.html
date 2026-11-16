@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
- <meta charset="UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MEtronome</title>
+  
   <style>
     * {
       box-sizing: border-box;
@@ -85,13 +86,13 @@
     #beats {
       display: flex;
       justify-content: center;
-      gap: 16px;
-      margin: 24px 0;
+      gap: 14px;
+      margin: 8px 0 32px;
     }
 
     .dot {
-      width: 28px;
-      height: 28px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: #e0e0e0;
       transition: background 0.08s, transform 0.08s;
@@ -131,7 +132,14 @@
 <body>
   <main class="metronome">
     <h1>MEtronome</h1>
-    
+
+    <div id="beats">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
     <p class="bpm-display">
       <span id="bpm">120</span><span class="unit">BPM</span>
     </p>
@@ -141,13 +149,6 @@
       <button id="down" class="round" aria-label="テンポを下げる">−</button>
       <button id="up" class="round" aria-label="テンポを上げる">＋</button>
       <button id="up10" class="round" aria-label="テンポを10上げる">＋10</button>
-    </div>
-
-    <div id="beats">
-      <span class="dot"></span>
-      <span class="dot"></span>
-      <span class="dot"></span>
-      <span class="dot"></span>
     </div>
 
     <button id="toggle" class="primary">Start</button>
